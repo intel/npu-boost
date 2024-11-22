@@ -1,0 +1,55 @@
+[Configuration]
+# Flag to clean previous results
+clean_prev_results = true
+
+# Path to the input image file for Visual QA tasks
+#input_img_file = "test-local.jpg"
+input_img_file = "https://retailedge.intel.com/content/images/loginpage7/VideoScreen_2.jpg"
+
+# Path to the input audio file for transcription tasks. Only wav files are supported.
+#input_aud_file = "test-local.wav"
+input_aud_file = "https://www.signalogic.com/melp/EngSamples/Orig/male.wav"
+
+# Question to be provided as input for Text 2 Text QA and VQA
+input_text_ttot = 'What was the name of the first processor built by Intel?'
+input_text_vqa = "what animal is in this picture?"
+
+# Number of Iterations
+num-iter = 10
+
+# Hugging Face access token
+HFaccessToken = ""
+
+# Reference answers for the above questions
+#ref_answer_aud = 'When the going gets tough, tough gets going. When the going gets rougher, tough gets rough. Water is the epitome of life.'
+ref_answer_aud = "But what if somebody decides to break it? Be careful that you keep adequate coverage. But look for places to save money. Maybe it's taking longer to get things squared away than the bankers expected. The boost is helpful, but inadequate. What a discussion can ensue when the title of this type of song is in question. There is no dying or waxing or gasing needed."
+ref_answer_ttot = 'Intel 4004'
+#ref_answer_vqa = 'horse'
+ref_answer_vqa = 'cat'
+
+# Flag to enable Pytorch profiling
+enable_pytorch_profiling = false
+
+# Flag to enable additional run on CPU
+run_additional_cpu = false
+
+# Text to Text Generation Models
+[codereviewer]
+id = "microsoft/codereviewer"
+input_q = "if (a==b): print('yes') else:"
+modelgen = "AutoModelForSeq2SeqLM"
+ref_answer = "<msg>Please remove this blank line."
+tokenizer = "AutoTokenizer"
+useNPUAccelerationLibrary = true
+target_dtype = "int8"
+attn_impl = "eager"
+
+[mt0-base]
+id = "bigscience/mt0-base"
+input_q = "What colors are present in a rainbow?"
+modelgen = "AutoModelForSeq2SeqLM"
+ref_answer = "purple, yellow, and blue"
+tokenizer = "AutoTokenizer"
+useNPUAccelerationLibrary = true
+attn_impl = "eager"
+target_dtype = "int8"
