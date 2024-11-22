@@ -8,13 +8,30 @@
 extern "C" {
 
 intel_npu_acceleration_library_DLL_API bool isNPUAvailable() {
-    ov::Core core;
-    return intel_npu_acceleration_library::_isNPUAvailable(core);
+    return intel_npu_acceleration_library::_isNPUAvailable(intel_npu_acceleration_library::core);
 }
 
 intel_npu_acceleration_library_DLL_API uint32_t getNPUDriverVersion() {
-    ov::Core core;
-    return intel_npu_acceleration_library::driver_version(core);
+    return intel_npu_acceleration_library::driver_version(intel_npu_acceleration_library::core);
+}
+
+// ######################## Remote Tensors ########################
+
+intel_npu_acceleration_library_DLL_API intel_npu_acceleration_library::Tensor* to_npu(size_t size,
+                                                                                      unsigned int* shape_data,
+                                                                                      char* dtype, void* data) {
+    ov::element::Type_t ov_dtype = intel_npu_acceleration_library::dtype_from_string(std::string(dtype));
+    std::vector<size_t> shape(shape_data, shape_data + size);
+
+    return new intel_npu_acceleration_library::Tensor(ov_dtype, shape, data);
+}
+
+intel_npu_acceleration_library_DLL_API void* remote_tensor_data(intel_npu_acceleration_library::Tensor* rt) {
+    return rt->data();
+}
+
+intel_npu_acceleration_library_DLL_API void del_remote_tensor(intel_npu_acceleration_library::Tensor* rt) {
+    delete rt;
 }
 
 // ######################## Compression ########################

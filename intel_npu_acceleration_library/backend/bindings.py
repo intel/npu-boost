@@ -88,6 +88,15 @@ def init_common(lib: ctypes.CDLL):
 
     lib.compressToI4.argtypes = [c_i8_array, c_u8_array, ctypes.c_int]
 
+    # Remote tensors
+    lib.to_npu.argtypes = [ctypes.c_int, c_u32_array, ctypes.c_char_p, ctypes.c_void_p]
+    lib.to_npu.restype = handler
+
+    lib.remote_tensor_data.argtypes = [handler]
+    lib.remote_tensor_data.restype = ctypes.c_void_p
+
+    lib.del_remote_tensor.argtypes = [handler]
+
 
 def init_network_factory(lib: ctypes.CDLL):
     """Initialize Netowrk factory bindings.

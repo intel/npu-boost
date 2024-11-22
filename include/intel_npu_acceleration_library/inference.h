@@ -19,14 +19,9 @@
 #include <vector>
 #include "intel_npu_acceleration_library/common.h"
 #include "intel_npu_acceleration_library/parameters.h"
+#include "intel_npu_acceleration_library/tensor.h"
 
 namespace intel_npu_acceleration_library {
-
-/**
- * @brief OpenVINO core object
- *
- */
-static ov::Core core;
 
 /**
  * @brief Create a remote tensor
@@ -96,8 +91,6 @@ protected:
         compiled_model = core.compile_model(model, device);
         // Create inference request
         infer_request = compiled_model.create_infer_request();
-        // First inference
-        infer_request.infer();
     }
 
     /**
@@ -125,6 +118,14 @@ public:
     virtual ~OVInferenceModel() {
         if (wt_thread.joinable())
             wt_thread.join();
+    }
+
+    /**
+     * @brief Get the remote context
+     *
+     */
+    auto get_context() {
+        return core.get_default_context(device).as<ov::intel_npu::level_zero::ZeroContext>();
     }
 
     /**
@@ -169,6 +170,42 @@ public:
     }
 
     /**
+     * @brief Create a Remote Tensor object
+     *
+     * @param type element type
+     * @param shape element shape
+     * @param tensor_type element tensor type: INPUT, OUTPUT, BIND
+     * @return auto
+     */
+    auto createRemoteTensor(const ov::element::Type type, const ov::Shape& shape,
+                            const ov::intel_npu::TensorType tensor_type) {
+        ov::intel_npu::level_zero::ZeroContext context = get_context();
+        return context.create_l0_host_tensor(type, shape, tensor_type);
+    }
+
+    /**
+     * @brief Create a Remote Tensor object
+     *
+     * @param idx index of the input tensor
+     * @return auto
+     */
+    auto createRemoteInputTensor(size_t idx) {
+        auto tensor = infer_request.get_input_tensor(idx);
+        return createRemoteTensor(tensor.get_element_type(), tensor.get_shape(), ov::intel_npu::TensorType::INPUT);
+    }
+
+    /**
+     * @brief Create a Remote Tensor object
+     *
+     * @param idx index of the output tensor
+     * @return auto
+     */
+    auto createRemoteOutputTensor(size_t idx) {
+        auto tensor = infer_request.get_output_tensor(idx);
+        return createRemoteTensor(tensor.get_element_type(), tensor.get_shape(), ov::intel_npu::TensorType::OUTPUT);
+    }
+
+    /**
      * @brief Get model input tensor
      *
      * @param idx input tensor index
@@ -203,6 +240,16 @@ public:
     }
 
     /**
+     * @brief Set the input activations
+     *
+     * @param _X reference to a zero buffer tensor
+     * @param idx input tensor index
+     */
+    void setInputTensor(ov::intel_npu::level_zero::ZeroBufferTensor& _X, size_t idx) {
+        infer_request.set_input_tensor(idx, _X);
+    }
+
+    /**
      * @brief Set the output activations
      *
      * @param _X pointer to the float16 output activation buffer
@@ -212,6 +259,16 @@ public:
         auto tensor = infer_request.get_output_tensor(idx);
         X = ov::Tensor(tensor.get_element_type(), tensor.get_shape(), _X);
         infer_request.set_output_tensor(idx, X);
+    }
+
+    /**
+     * @brief Set the output activations
+     *
+     * @param _X reference to a zero buffer tensor
+     * @param idx output tensor index
+     */
+    void setOutputTensor(ov::intel_npu::level_zero::ZeroBufferTensor& _X, size_t idx) {
+        infer_request.set_output_tensor(idx, _X);
     }
 
     /**

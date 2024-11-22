@@ -7,7 +7,7 @@ from intel_npu_acceleration_library.backend.base import BaseNPUBackendWithPrefet
 from intel_npu_acceleration_library.backend.ops import get_supported_ops
 from intel_npu_acceleration_library.backend.bindings import lib as backend_lib
 from intel_npu_acceleration_library.backend.tensor import Tensor
-from intel_npu_acceleration_library.dtypes import int4, bfloat16
+from intel_npu_acceleration_library.dtypes import get_backend_dtype
 from typing import Optional, Tuple, Any, Union, Sequence, TypeVar, Callable, cast, List
 from functools import partial
 import numpy.typing as npt
@@ -115,34 +115,10 @@ class NNFactory(BaseNPUBackendWithPrefetch):
         Args:
             dtype: numpy dtype
 
-        Raises:
-            RuntimeError: Unsupported datatype
-
         Returns:
             ctypes.c_char_p: string representation of the dtype
         """
-        if dtype in [np.int8, torch.int8]:
-            str_dtype = "int8"
-        elif dtype == np.uint8 or dtype == int4:
-            # u8 represents packed i4 dtypes
-            str_dtype = "int4"
-        elif dtype in [np.int16, torch.int16]:
-            str_dtype = "int16"
-        elif dtype in [np.int32, torch.int32]:
-            str_dtype = "int32"
-        elif dtype in [np.int64, torch.int64]:
-            str_dtype = "int64"
-        elif dtype in [np.float16, torch.float16]:
-            str_dtype = "float16"
-        elif dtype in [np.float32, torch.float32]:
-            str_dtype = "float32"
-        elif dtype in [np.float64, torch.float64]:
-            str_dtype = "float64"
-        elif dtype in [bfloat16, torch.bfloat16]:
-            str_dtype = "bfloat16"
-        else:
-            raise RuntimeError(f"DType is not supported {dtype}")
-        return ctypes.c_char_p(str_dtype.encode())
+        return get_backend_dtype(dtype)
 
     @return_tensor
     def parameter(

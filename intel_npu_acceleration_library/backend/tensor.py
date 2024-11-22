@@ -16,12 +16,88 @@ from intel_npu_acceleration_library.dtypes import (
     int32,
     int64,
     NPUDtype,
+    get_backend_dtype,
 )
 from dataclasses import dataclass
 import functools
+from math import prod
 import numpy as np
 import ctypes
 import torch
+
+
+class RemoteTensor(torch.Tensor):
+    """
+    Represent a remote tensor object.
+
+    Attrs:
+        _remote_tensor (ctypes._Pointer): The pointer to the underlying remote tensor.
+
+    Methods:
+        from_torch(x: torch.Tensor): Create a remote tensor from a torch tensor.
+    """
+
+    _remote_tensor = None
+
+    @staticmethod
+    def __new__(cls, x: Any, remote_tensor: ctypes._Pointer, *args: Any, **kwargs: Any):
+        """
+        Create a new remote tensor object.
+
+        Args:
+            x (Any): tensor input
+            remote_tensor (ctypes._Pointer): remote tensor pointer
+            args (Any): additional arguments
+            kwargs (Any): additional keyword arguments
+
+        Returns:
+            RemoteTensor: a RemoteTensor object
+        """
+        return super().__new__(cls, x, *args, **kwargs)
+
+    def __init__(self, x: Any, remote_tensor: ctypes._Pointer):
+        """
+        Initialize the remote tensor object.
+
+        Args:
+            x (Any): tensor input
+            remote_tensor (ctypes._Pointer): remote tensor pointer
+        """
+        self._remote_tensor = remote_tensor
+
+    # def __del__(self):
+    #     if self._remote_tensor and backend_lib:
+    #         backend_lib.del_remote_tensor(self._remote_tensor)
+
+    @staticmethod
+    def from_torch(x: torch.Tensor) -> "RemoteTensor":
+        """
+        Create a remote tensor from a torch tensor.
+
+        Args:
+            x (torch.Tensor): The torch tensor.
+
+        Returns:
+            RemoteTensor: The remote tensor.
+        """
+        shape_arr = np.array(x.shape, dtype=np.uint32)
+        dtype_str = get_backend_dtype(x.dtype)
+        p = ctypes.cast(x.data_ptr(), ctypes.c_void_p)
+
+        rt = backend_lib.to_npu(shape_arr.size, shape_arr, dtype_str, p)
+
+        pointer = ctypes.cast(
+            backend_lib.remote_tensor_data(rt),
+            ctypes.POINTER(ctypes.c_uint8),
+        )
+
+        arr = (pointer._type_ * prod(x.shape) * x.element_size()).from_address(
+            ctypes.addressof(pointer.contents)
+        )
+
+        pt_tensor = torch.frombuffer(arr, dtype=x.dtype).view(*x.shape)
+
+        return RemoteTensor(pt_tensor, rt)
 
 
 @dataclass

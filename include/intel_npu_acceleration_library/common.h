@@ -13,6 +13,7 @@
 #include "openvino/opsets/opset7.hpp"
 #include "openvino/opsets/opset8.hpp"
 #include "openvino/opsets/opset9.hpp"
+#include "openvino/runtime/intel_npu/level_zero/level_zero.hpp"
 #include "openvino/runtime/intel_npu/properties.hpp"
 
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
@@ -22,6 +23,12 @@
 #endif
 
 namespace intel_npu_acceleration_library {
+
+/**
+ * @brief OpenVINO core object
+ *
+ */
+ov::Core core;
 
 static constexpr ov::Property<std::string> npu_compiler_type{"NPU_COMPILER_TYPE"};
 static constexpr ov::Property<std::string> npu_parameters{"NPU_COMPILATION_MODE_PARAMS"};

@@ -68,25 +68,6 @@ def compute_input_signature(
     return "_".join(signature)
 
 
-def patch_parameters(module: torch.nn.Module, model: NNFactory, recurse: bool = False):
-    """Patch the parameters of a PyTorch module with constants.
-
-    Args:
-        module (torch.nn.Module): The PyTorch module.
-        model (NNFactory): The NNFactory instance.
-        recurse (bool, optional): Recurse over all submodules. Defaults to False.
-    """
-    elements = list(module.named_parameters(recurse=recurse))
-    for name, param in elements:
-        del module._parameters[name]
-        setattr(module, name, model.constant(param.data.detach().numpy()))
-
-    buffers = list(module.named_buffers(recurse=recurse))
-    for name, param in buffers:
-        del module._buffers[name]
-        setattr(module, name, model.constant(param.data.detach().numpy()))
-
-
 def patch_modules(module: torch.nn.Module, model: NNFactory):
     """Patch the modules of a PyTorch module with constants.
 
@@ -98,7 +79,6 @@ def patch_modules(module: torch.nn.Module, model: NNFactory):
     for _, module in modules:
         if isinstance(module, Module):
             module.npu_top_level_module = False
-        # patch_parameters(module, model)
         patch_modules(module, model)
 
 
@@ -230,7 +210,6 @@ class Module(torch.nn.Module):
         npu_kwargs = create_kwargs_from_list(kwargs)
 
         patch_modules(self, model)
-        # patch_parameters(self, model)
 
         _ = self.forward(*npu_args, **npu_kwargs)
         model.compile()

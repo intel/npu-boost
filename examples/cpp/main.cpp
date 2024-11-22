@@ -9,7 +9,7 @@ using namespace intel_npu_acceleration_library;
 #include <iostream>
 
 int main() {
-    const size_t batch = 128, inC = 256, outC = 512, N = 100000;
+    const size_t batch = 128, inC = 256, outC = 512, N = 10000;
 
     std::cout << "Create a ModelFactory" << std::endl;
     auto factory = std::make_shared<ModelFactory>("NPU");
@@ -28,19 +28,19 @@ int main() {
     factory->compile();
 
     // Save OV model
-    std::cout << "Saving model to matmul.xml" << std::endl;
-    factory->saveModel("matmul.xml");
+    // std::cout << "Saving model to matmul.xml" << std::endl;
+    // factory->saveModel("matmul.xml");
 
-    // Here you can create float16 buffers and run inference by using
-    half_ptr input_buffer = new uint16_t[batch * inC];
-    half_ptr weights_buffer = new uint16_t[outC * inC];
-    half_ptr bias_buffer = new uint16_t[outC];
-    half_ptr output_buffer = new uint16_t[batch * outC];
+    std::cout << "Creating a remote tensor" << std::endl;
+    auto input_buffer = factory->createRemoteInputTensor(0);
+    auto weights_buffer = factory->createRemoteInputTensor(1);
+    auto bias_buffer = factory->createRemoteInputTensor(2);
+    auto output_buffer = factory->createRemoteOutputTensor(0);
 
-    memset(input_buffer, 0, batch * inC * sizeof(uint16_t));
-    memset(weights_buffer, 0, outC * inC * sizeof(uint16_t));
-    memset(output_buffer, 0, batch * outC * sizeof(uint16_t));
-    memset(bias_buffer, 0, outC * sizeof(uint16_t));
+    std::memset(input_buffer.get(), 0, input_buffer.get_byte_size());
+    std::memset(weights_buffer.get(), 0, weights_buffer.get_byte_size());
+    std::memset(bias_buffer.get(), 0, bias_buffer.get_byte_size());
+    std::memset(output_buffer.get(), 0, output_buffer.get_byte_size());
 
     factory->setInputTensor(input_buffer, 0);
     factory->setInputTensor(weights_buffer, 1);
@@ -49,13 +49,10 @@ int main() {
 
     // Run inference
     std::cout << "Run inference on " << N << " workloads" << std::endl;
-    for (auto idx = 0; idx < N; idx++)
+    for (auto idx = 0; idx < N; idx++) {
         factory->run();
-    std::cout << "Inference done" << std::endl;
+    }
 
-    delete[] input_buffer;
-    delete[] weights_buffer;
-    delete[] bias_buffer;
-    delete[] output_buffer;
+    std::cout << "Inference done" << std::endl;
     return 0;
 }

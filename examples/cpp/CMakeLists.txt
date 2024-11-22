@@ -19,8 +19,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 FetchContent_Declare(
         intel_npu_acceleration_library
-        GIT_REPOSITORY "https://github.com/intel/intel-npu-acceleration-library"
-        GIT_TAG "main"
+        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../"
 )
 FetchContent_MakeAvailable(intel_npu_acceleration_library)
 

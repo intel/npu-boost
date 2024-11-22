@@ -4,6 +4,7 @@
 #
 
 from intel_npu_acceleration_library.nn.module import convert_to_npu_module
+from intel_npu_acceleration_library.backend.tensor import RemoteTensor
 from torch.overrides import TorchFunctionMode
 from functools import lru_cache
 from typing import Any, MutableMapping
@@ -165,8 +166,7 @@ def to(super_fn: Any, self: Any, *args: Any, **kwargs: Any):
     """
     npu_device, args, kwargs = parse_to_arguments(*args, **kwargs)
     if npu_device:
-        # None for now, once the remote tensor feature lands, it can be converted to a remote tensor
-        pass
+        return super_fn(RemoteTensor.from_torch(self), *args, **kwargs)
     return super_fn(self, *args, **kwargs)
 
 

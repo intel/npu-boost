@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Union
 import numpy as np
 import torch
+import ctypes
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,42 @@ class NPUDtype:
             str: The string representation of the NPUDtype object.
         """
         return self.name
+
+
+def get_backend_dtype(dtype) -> ctypes.c_char_p:
+    """Get the string representation of the dtype.
+
+    Args:
+        dtype: numpy dtype
+
+    Raises:
+        RuntimeError: Unsupported datatype
+
+    Returns:
+        ctypes.c_char_p: string representation of the dtype
+    """
+    if dtype in [np.int8, torch.int8]:
+        str_dtype = "int8"
+    elif dtype in [np.uint8, int4, torch.uint8]:
+        # u8 represents packed i4 dtypes
+        str_dtype = "int4"
+    elif dtype in [np.int16, torch.int16]:
+        str_dtype = "int16"
+    elif dtype in [np.int32, torch.int32]:
+        str_dtype = "int32"
+    elif dtype in [np.int64, torch.int64]:
+        str_dtype = "int64"
+    elif dtype in [np.float16, torch.float16]:
+        str_dtype = "float16"
+    elif dtype in [np.float32, torch.float32]:
+        str_dtype = "float32"
+    elif dtype in [np.float64, torch.float64]:
+        str_dtype = "float64"
+    elif dtype in [bfloat16, torch.bfloat16]:
+        str_dtype = "bfloat16"
+    else:
+        raise RuntimeError(f"DType is not supported {dtype}")
+    return ctypes.c_char_p(str_dtype.encode())
 
 
 float16 = NPUDtype(
